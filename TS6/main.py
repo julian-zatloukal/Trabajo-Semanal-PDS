@@ -71,13 +71,13 @@ plt.title('Audio (La Cucaracha)')
 
 print("Frecuencia de audio", fs_audio)
 
-# Acelerómetro (Subject 1 - UCI HAR)
+# Acelerómetro (UCI HAR)
 fs_acc = 50
 acc_df = pd.read_csv('signals/subject_1_continuous.csv')
 acc = acc_df['total_acc_x'].to_numpy().astype(np.float64)
 plt.figure()
 plt.plot(acc)
-plt.title('Acelerómetro (Subject 1)')
+plt.title('Acelerómetro')
 
 print("Frecuencia de muestreo acelerómetro:", fs_acc, "Hz")
 
@@ -119,7 +119,7 @@ plt.show()
 
 plt.figure(figsize=(10, 4))
 plt.plot(f_acc, 10 * np.log10(psd_acc + 1e-12), color='red', lw=1.2)
-plt.title('Periodograma Ventaneado (Hann) - Acelerómetro (Subject 1)')
+plt.title('Periodograma Ventaneado (Hann) - Acelerómetro')
 plt.xlabel('Frecuencia [Hz]')
 plt.ylabel('Densidad de Potencia [dB/Hz]')
 plt.grid(True, alpha=0.5)
@@ -184,7 +184,7 @@ for k in k_values:
     nperseg_acc = int(N_acc / k)
     f_acc_w, psd_acc_w = signal.welch(acc, fs=fs_acc, nperseg=nperseg_acc)
     plt.plot(f_acc_w, 10 * np.log10(psd_acc_w + 1e-12), lw=1.4, label=f"Welch. k={k}")
-plt.title('Método de Welch en Acelerómetro (Subject 1)')
+plt.title('Método de Welch en Acelerómetro')
 plt.xlabel('Frecuencia [Hz]')
 plt.ylabel('Densidad Potencia [dB/Hz]')
 plt.grid(True, which="both", ls="-", alpha=0.5)
@@ -196,8 +196,8 @@ plt.show()
 
 # Método de Blackman Tukey
 
-# Usamos M = N/div para varios divisores: div grande -> M chico -> más suave;
-# div chico -> M grande -> más resolución (y más varianza), análogo al
+# Usamos M = N/div para varios divisores: div grande, M chico, más suave;
+# div chico, M grande, más resolución (y más varianza), análogo al
 # compromiso de Welch con k.
 
 bt_divs = [40, 20, 10]
@@ -266,7 +266,7 @@ for div in bt_divs:
     Px = blackman_tukey(acc, M)
     psd_db = 10 * np.log10(np.abs(Px[bfrec_acc]) + 1e-12)
     plt.plot(ff_acc_bt[bfrec_acc], psd_db, lw=1.4, label=f"Blackman-Tukey. M={M}")
-plt.title('Método de Blackman-Tukey en Acelerómetro (Subject 1)')
+plt.title('Método de Blackman-Tukey en Acelerómetro')
 plt.xlabel('Frecuencia [Hz]')
 plt.ylabel('Densidad Potencia [dB]')
 plt.grid(True, which="both", ls="-", alpha=0.5)
@@ -275,7 +275,7 @@ plt.tight_layout()
 plt.show()
 
 
-# ---- Ancho de banda: 95% de energía acumulada (cumsum), forma pasa-bajos ----
+# Ancho de banda: 95% de energía acumulada (cumsum), forma pasa-bajos
 def bw95(f, psd):
     c = np.cumsum(psd)
     return f[np.searchsorted(c, 0.95 * c[-1])]
