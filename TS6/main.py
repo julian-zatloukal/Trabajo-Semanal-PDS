@@ -12,36 +12,34 @@ Estimación espectral de ECG, PPG y Audio mediante:
 """
 
 import numpy as np
+import pandas as pd
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 
 # Implementacion de Mariano Llamedo
 # https://github.com/marianux/pdstestbench/tree/master
-def blackman_tukey(x,  M = None):
+def blackman_tukey(x, M=None):
 
-    # N = len(x)
     x_z = x.shape
-
     N = np.max(x_z)
 
     if M is None:
-        M = N//5
+        M = N // 5
 
-    r_len = 2*M-1
+    r_len = 2 * M - 1
+    xx = x.ravel() - np.mean(x.ravel())  # remove DC, consistent with periodogram/welch detrend='constant'
 
-    # hay que aplanar los arrays por np.correlate.
-    # usaremos el modo same que simplifica el tratamiento
-    # de la autocorr
-    xx = x.ravel()[:r_len];
+    # Biased autocorrelation from the full signal via FFT, then keep lags -(M-1)..M-1
+    Nfft = int(2 ** np.ceil(np.log2(2 * N - 1)))
+    R = np.abs(np.fft.rfft(xx, n=Nfft)) ** 2
+    r_full = np.fft.irfft(R, n=Nfft)[:N] / N
+    r = np.concatenate([r_full[M - 1:0:-1], r_full[:M]])
 
-    r = np.correlate(xx, xx, mode='same') / r_len
-
-    Px = np.abs(np.fft.fft(r * signal.windows.blackman(r_len), n = N) )
-
+    Px = np.abs(np.fft.fft(r * signal.windows.blackman(r_len), n=N))
     Px = Px.reshape(x_z)
 
-    return Px;
+    return Px
 
 
 # Carga de señales
@@ -73,24 +71,22 @@ plt.title('Audio (La Cucaracha)')
 
 print("Frecuencia de audio", fs_audio)
 
-# Michael Jackson (.wav)
-fs_mj, mj = wavfile.read('signals/michael_jackson_beat_it.wav')
-if mj.ndim > 1:
-    mj = mj[:, 0]
-mj = mj.astype(np.float64)
-mj = mj[int(30 * fs_mj):int(90 * fs_mj)]  # segundos 30 a 90
+# Acelerómetro (Subject 1 - UCI HAR)
+fs_acc = 50
+acc_df = pd.read_csv('signals/subject_1_continuous.csv')
+acc = acc_df['total_acc_x'].to_numpy().astype(np.float64)
 plt.figure()
-plt.plot(mj)
-plt.title('Audio (Michael Jackson - Beat It)')
+plt.plot(acc)
+plt.title('Acelerómetro (Subject 1)')
 
-print("Frecuencia de Michael Jackson", fs_mj)
+print("Frecuencia de muestreo acelerómetro:", fs_acc, "Hz")
 
 
 # Estimación espectral: periodograma ventaneado (Hann)
 f_ecg, psd_ecg = signal.periodogram(ecg, fs=fs_ecg, window='hann')
 f_ppg, psd_ppg = signal.periodogram(ppg, fs=fs_ppg, window='hann')
 f_audio, psd_audio = signal.periodogram(audio, fs=fs_audio, window='hann')
-f_mj, psd_mj = signal.periodogram(mj, fs=fs_mj, window='hann')
+f_acc, psd_acc = signal.periodogram(acc, fs=fs_acc, window='hann')
 
 plt.figure(figsize=(10, 4))
 plt.plot(f_ecg, 10 * np.log10(psd_ecg + 1e-12), color='orange', lw=1.2)
@@ -122,8 +118,8 @@ plt.tight_layout()
 plt.show()
 
 plt.figure(figsize=(10, 4))
-plt.plot(f_mj, 10 * np.log10(psd_mj + 1e-12), color='red', lw=1.2)
-plt.title('Periodograma Ventaneado (Hann) - Audio (Michael Jackson - Beat It)')
+plt.plot(f_acc, 10 * np.log10(psd_acc + 1e-12), color='red', lw=1.2)
+plt.title('Periodograma Ventaneado (Hann) - Acelerómetro (Subject 1)')
 plt.xlabel('Frecuencia [Hz]')
 plt.ylabel('Densidad de Potencia [dB/Hz]')
 plt.grid(True, alpha=0.5)
@@ -181,14 +177,14 @@ plt.legend(loc='upper right')
 plt.tight_layout()
 plt.show()
 
-# Michael Jackson
-N_mj = mj.size
+# Acelerómetro
+N_acc = acc.size
 plt.figure(figsize=(10, 6))
 for k in k_values:
-    nperseg_mj = int(N_mj / k)
-    f_mj_w, psd_mj_w = signal.welch(mj, fs=fs_mj, nperseg=nperseg_mj)
-    plt.plot(f_mj_w, 10 * np.log10(psd_mj_w + 1e-12), lw=1.4, label=f"Welch. k={k}")
-plt.title('Método de Welch en Audio (Michael Jackson - Beat It)')
+    nperseg_acc = int(N_acc / k)
+    f_acc_w, psd_acc_w = signal.welch(acc, fs=fs_acc, nperseg=nperseg_acc)
+    plt.plot(f_acc_w, 10 * np.log10(psd_acc_w + 1e-12), lw=1.4, label=f"Welch. k={k}")
+plt.title('Método de Welch en Acelerómetro (Subject 1)')
 plt.xlabel('Frecuencia [Hz]')
 plt.ylabel('Densidad Potencia [dB/Hz]')
 plt.grid(True, which="both", ls="-", alpha=0.5)
@@ -262,15 +258,15 @@ plt.legend(loc='upper right')
 plt.tight_layout()
 plt.show()
 
-# Michael Jackson
-ff_mj_bt, bfrec_mj = frecuencias(N_mj, fs_mj)
+# Acelerómetro
+ff_acc_bt, bfrec_acc = frecuencias(N_acc, fs_acc)
 plt.figure(figsize=(10, 6))
 for div in bt_divs:
-    M = N_mj // div
-    Px = blackman_tukey(mj, M)
-    psd_db = 10 * np.log10(np.abs(Px[bfrec_mj]) + 1e-12)
-    plt.plot(ff_mj_bt[bfrec_mj], psd_db, lw=1.4, label=f"Blackman-Tukey. M={M}")
-plt.title('Método de Blackman-Tukey en Audio (Michael Jackson - Beat It)')
+    M = N_acc // div
+    Px = blackman_tukey(acc, M)
+    psd_db = 10 * np.log10(np.abs(Px[bfrec_acc]) + 1e-12)
+    plt.plot(ff_acc_bt[bfrec_acc], psd_db, lw=1.4, label=f"Blackman-Tukey. M={M}")
+plt.title('Método de Blackman-Tukey en Acelerómetro (Subject 1)')
 plt.xlabel('Frecuencia [Hz]')
 plt.ylabel('Densidad Potencia [dB]')
 plt.grid(True, which="both", ls="-", alpha=0.5)
@@ -285,7 +281,7 @@ def bw95(f, psd):
     return f[np.searchsorted(c, 0.95 * c[-1])]
 
 print(f"\n{'Señal':<7}{'Periodog.':>11}{'Welch':>9}{'Black-Tukey':>13}   [Hz]")
-for name, x, fs in [('ECG', ecg, fs_ecg), ('PPG', ppg, fs_ppg), ('Audio', audio, fs_audio), ('MJ', mj, fs_mj)]:
+for name, x, fs in [('ECG', ecg, fs_ecg), ('PPG', ppg, fs_ppg), ('Audio', audio, fs_audio), ('Acc', acc, fs_acc)]:
     N = x.size
     fp, pp = signal.periodogram(x, fs=fs, window='hann')
     fw, pw = signal.welch(x, fs=fs, nperseg=N // 10)
