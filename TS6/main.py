@@ -78,7 +78,7 @@ fs_mj, mj = wavfile.read('signals/michael_jackson_beat_it.wav')
 if mj.ndim > 1:
     mj = mj[:, 0]
 mj = mj.astype(np.float64)
-mj = mj[:int(30 * fs_mj)]  # limitar a 30 segundos
+mj = mj[int(30 * fs_mj):int(90 * fs_mj)]  # segundos 30 a 90
 plt.figure()
 plt.plot(mj)
 plt.title('Audio (Michael Jackson - Beat It)')
