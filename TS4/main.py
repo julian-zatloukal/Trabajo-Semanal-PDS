@@ -96,3 +96,38 @@ ax2.grid(True, alpha=0.25)
 plt.tight_layout()
 plt.savefig('TS4_psd_zeropadding.png', dpi=150, bbox_inches='tight')
 plt.show()
+
+# =============================================================================
+# Conclusiones
+# =============================================================================
+#
+# a)
+#
+# Cuando la frecuencia de la senoidal cae exactamente sobre una línea de la
+# grilla (k0 = N/4), toda la energía se concentra en un único bin y la PSD
+# muestra un pico perfectamente definido. Al agregar una desintonía de 0.25 o
+# 0.5 veces delta f, la energía se "desparrama" hacia los bins vecinos. El
+# caso más crítico es la desintonía de 0.5 * delta f (justo entre dos líneas
+# de la grilla), donde el desparramo es máximo y el espectro pierde nitidez
+# notablemente.
+#
+# b)
+#
+# En todos los casos la suma de la PSD resultó igual a 1 W, verificando la
+# potencia unitaria por el teorema de Parseval. La razón por la cual dos
+# senoidales de frecuencias muy similares pueden tener espectros tan distintos
+# es que la DFT asume implícitamente que la señal es periódica dentro de la
+# ventana de N muestras. Si la frecuencia no es un múltiplo exacto de delta f,
+# la señal no completa un número entero de ciclos en esa ventana, generando
+# una discontinuidad en los bordes que introduce componentes espectrales
+# espurias en todos los demás bins.
+#
+# Bonus
+#
+# El zero padding (9N ceros agregados, nfft = 10N) no mejora la resolución
+# espectral real, esta sigue determinada únicamente por la longitud de la
+# señal original. Lo que hace es interpolar el espectro continuo subyacente
+# con mayor densidad de puntos, revelando la forma del lóbulo de la función
+# ventana rectangular. Con esto se puede apreciar con más detalle cómo se
+# distribuye la energía en cada caso de desintonía, pero no es posible separar
+# componentes que estén a menos de delta f entre sí.
