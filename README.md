@@ -10,3 +10,4 @@ Procesamiento Digital de Señales UTN FRBA.
 | [TS4](https://julian-zatloukal.github.io/Trabajo-Semanal-PDS/TS4/main) | Desparramo espectral y zero padding en la DFT |
 | [TS5](https://julian-zatloukal.github.io/Trabajo-Semanal-PDS/TS5/main) | Estimación de amplitud y frecuencia con ventanas espectrales |
 | [TS6](https://julian-zatloukal.github.io/Trabajo-Semanal-PDS/TS6/main) | Estimación espectral de ECG, PPG y audio con Welch y Blackman-Tukey |
+| [TS7](https://julian-zatloukal.github.io/Trabajo-Semanal-PDS/TS7/main) | Filtrado digital lineal de ECG con filtros IIR y FIR |
